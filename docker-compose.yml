@@ -1,0 +1,21 @@
+services:
+  influx:
+   image: influxdb:2.0
+   environment:
+    - DOCKER_INFLUXDB_INIT_USERNAME=my-user
+    - DOCKER_INFLUXDB_INIT_PASSWORD=my-password
+    - DOCKER_INFLUXDB_INIT_ORG=my-org
+    - DOCKER_INFLUXDB_INIT_BUCKET=my-bucket
+    - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=mytoken
+    - DOCKER_INFLUXDB_INIT_MODE=setup
+   volumes:
+    - influxdb:/var/lib/influxdb2
+   ports:
+    - 8086:8086
+  monitor:
+    build: ./
+    depends_on:
+      - influx
+
+volumes:
+ influxdb: {}

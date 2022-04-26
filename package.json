@@ -1,0 +1,23 @@
+{
+  "name": "sensors-monitor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@influxdata/influxdb-client": "^1.25.0",
+    "dotenv": "^16.0.0",
+    "influxdb-nodejs": "^3.1.0",
+    "lodash": "^4.17.21",
+    "pino": "^7.10.0",
+    "pino-pretty": "^7.6.1",
+    "sqlite3": "^5.0.5"
+  }
+}
