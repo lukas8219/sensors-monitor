@@ -6,6 +6,8 @@ RUN apt install lm-sensors -y
 
 COPY .env .
 
+COPY ./src .
+
 COPY package.json ./package.json
 
 COPY index.js .
