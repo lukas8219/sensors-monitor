@@ -3,6 +3,7 @@ import _ from 'lodash'
 import { writePoint } from './src/influx.js'
 import { LOGGER } from './src/logger.js'
 import { BFS, retrieveSensorData, toCoreTemp } from './src/util.js';
+import { retry } from './src/worker.js';
 
 const FAILED_ENTRIES = [];
 
@@ -27,29 +28,30 @@ setInterval(() => {
 
 function INSERT(objt) {
     LOGGER.debug(`Starting to insert data into Influx for ${JSON.stringify(objt)}`);
-    Object.keys(objt).forEach((k) => {
-        const OBJ = objt[k];
+    for (const measurementName of Object.keys(objt)) {
+        const OBJ = objt[measurementName];
         LOGGER.debug(`Inserting entries for ${JSON.stringify(OBJ)}`);
-        Object.entries(OBJ).forEach(async (v) => {
-            LOGGER.debug(`Insering into ${k} - ${v[0]} - ${v[1]}`);
-            if (v[0] && v[1]) {
-                try {
-                    await writePoint({
-                        measurementName: k,
-                        fieldName: v[0],
-                        fieldValue: v[1],
-                    }).close();
-                    LOGGER.info(`${k} -- ${v[0]} -- ${v[1]}`);
-                } catch (err) {
-                    FAILED_ENTRIES.push({
-                        measurementName: k,
-                        fieldName: v[0],
-                        filedValue: v[1]
-                    });
-                    LOGGER.error(`An error occurred when trying to write to Influx. Retry on first success`);
-                }
+        for (const [fieldName, fieldValue] of Object.entries(OBJ)) {
+            const insertIntoInflux = async () => {
+                LOGGER.debug(`Insering into ${measurementName} - ${fieldName} - ${fieldValue}`);
+                if (fieldName && fieldValue) {
+                    const MEASUREMENT_DATA = { measurementName, fieldName, fieldValue };
+                    try {
+                        const REQUEST = await writePoint(MEASUREMENT_DATA);
+                        await REQUEST.close();
+                        LOGGER.info(`${measurementName} -- ${fieldName} -- ${fieldValue}`);
 
+                        if (FAILED_ENTRIES.length) {
+                            retry(FAILED_ENTRIES.splice(0));
+                        }
+
+                    } catch (err) {
+                        FAILED_ENTRIES.push(MEASUREMENT_DATA);
+                        LOGGER.error(`An error occurred when trying to write to Influx. Retry on first success ${JSON.stringify(err)}`);
+                    }
+                }
             }
-        })
-    })
+            insertIntoInflux();
+        }
+    }
 }

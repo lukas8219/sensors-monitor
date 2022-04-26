@@ -6,12 +6,18 @@ const { DOCKER_INFLUXDB_INIT_ORG: ORG, DOCKER_INFLUXDB_INIT_BUCKET: BUCK, DOCKER
 const CLIENT = new InfluxDB({ url: 'http://influx:8086', token: TOKEN })
 
 async function writePoint({ measurementName, fieldName, fieldValue }) {
-    const writeApi = CLIENT.getWriteApi(ORG, BUCK)
-    writeApi.useDefaultTags({ host: 'host1' });
-    const point = new Point(measurementName)
-        .intField(fieldName, fieldValue);
-    writeApi.writePoint(point);
-    return writeApi;
+    return new Promise((res, rej) => {
+        try {
+            const writeApi = CLIENT.getWriteApi(ORG, BUCK);
+            writeApi.useDefaultTags({ host: 'host1' });
+            const point = new Point(measurementName)
+                .intField(fieldName, fieldValue);
+            writeApi.writePoint(point);
+            res(writeApi);
+        } catch (err) {
+            rej(err);
+        }
+    });
 }
 
 export {
